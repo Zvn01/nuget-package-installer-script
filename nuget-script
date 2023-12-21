@@ -1,0 +1,62 @@
+# Array der Pakete
+$packages = @(
+    "Azure.Core",
+    "Azure.Identity",
+    "Azure.Storage.Blobs",
+    "Azure.Storage.Common",
+    "Microsoft.ApplicationInsights.WorkerService",
+    "Microsoft.Azure.Functions.Worker",
+    "Microsoft.Azure.Functions.Worker.ApplicationInsights",
+    "Microsoft.Azure.Functions.Worker.Extensions.Timer",
+    "Microsoft.Azure.Functions.Worker.Sdk",
+    "Microsoft.Azure.WebJobs",
+    "Microsoft.Azure.WebJobs.Extensions",
+    "Microsoft.Azure.WebJobs.Extensions.Timers.Storage",
+    "Microsoft.Identity.Client",
+    "Microsoft.PowerBI.Api",
+    "WindowsAzure.Storage"
+)
+
+$nugetSource = "https://www.nuget.org/api/v2/"
+$totalPackages = $packages.Count
+
+Write-Host "Starte Installation von $totalPackages NuGet Packages ..."
+
+try {
+    # Alle verfügbaren Pakete abrufen
+    $availablePackages = Find-Package -Source $nugetSource -AllVersions | Group-Object -Property Id | ForEach-Object { $_.Group | Sort-Object -Property Version -Descending | Select-Object -First 1 }
+
+    foreach ($package in $packages) {
+    try {
+        $latestPackage = $availablePackages | Where-Object { $_.Id -eq $package }
+
+        if ($latestPackage) {
+            $installedPackage = Get-Package -Name $latestPackage.Id -ErrorAction SilentlyContinue
+            if ($installedPackage) {
+                if ($installedPackage.Version -ge $latestPackage.Version) {
+                    Write-Host "Das Paket '$($latestPackage.Id)' ist bereits in der neuesten Version $($latestPackage.Version) installiert. Überspringe...." -ForegroundColor DarkYellow
+                    continue
+                }
+            }
+            $installResult = Install-Package -Name $latestPackage.Id -Force -ErrorAction Stop
+            if ($installResult) {
+                Write-Host "Das Paket '$($latestPackage.Id)' in der Version $($latestPackage.Version) wurde erfolgreich installiert." -ForegroundColor Green
+            } else {
+                Write-Host "Fehler beim Installieren des Pakets '$($latestPackage.Id)'." -ForegroundColor Red
+            }
+        } else {
+            Write-Host "Paket '$package' nicht gefunden." -ForegroundColor Red
+        }
+
+        $remainingPackages = $totalPackages - ($packages.IndexOf($package) + 1)
+        Write-Host "Installation von $package abgeschlossen... $($remainingPackages)/$totalPackages verbleibend." -ForegroundColor Green
+        Write-Host "-------------------------------------------"
+    } catch {
+        Write-Host "Fehler beim Installieren oder Überprüfen des Pakets '$package': $_" -ForegroundColor Red
+    }
+}
+
+    Write-Host "Alle angegebenen Pakete wurden überprüft und installiert, falls verfügbar." -ForegroundColor Green
+} catch {
+    Write-Host "Fehler beim Abrufen der verfügbaren Pakete: $_" -ForegroundColor Red
+}
