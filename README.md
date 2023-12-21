@@ -1,6 +1,9 @@
 # PowerShell Package Installer
 This script automates the installation and verification of specified NuGet packages for your project.
 
+![image](https://github.com/Zvn01/nuget-package-installer-script/assets/126197372/cd1c2109-9f7c-4602-9e96-0cf7109d6631)
+
+
 # Usage
 Requirements: Ensure PowerShell is installed on your system.  
 Clone Repository: Clone this repository to your local machine.  
